@@ -12,37 +12,41 @@
 
 import { Application, Router, Context, Status } from "https://deno.land/x/oak/mod.ts";
 
-
-//https://reqres.in/api/users
 type User = {
     id:number,
-    first_name:string,
-    last_name:string,
-    email: string,
-    avatar: string
+    name:string,
+    username: string,
+    email: string
 }
+
+
+
+
+
 
 const router = new Router();
 router.get('/', async (ctx:Context) =>{
-    // const resp = await fetch('https://reqres.in/api/users'));
-    // const data = await resp.json();
-
-    const data = await fetch('https://reqres.in/api/users').then(res => res.json()).then(user => user.data);
-    // console.log(`DEBUG data \n${JSON.stringify(data.length, null, 2)}`);
+    // const resp = await fetch('https://jsonplaceholder.typicode.com/users').then(res => res.json());
+    const resp = await fetch('https://jsonplaceholder.typicode.com/users');
+    const data = await resp.json();
+    // console.log(`DEBUG data \n${JSON.stringify(data, null, 2)}`);
     
+
     const usersData = [] as Promise<Response>[]
 
     for(let idx = 1; idx <= data.length; idx++) {
-        usersData.push(await fetch(`https://reqres.in/api/users/${idx}`).then(res => res.json()).then(u => u.data));
+        usersData.push(fetch(`https://jsonplaceholder.typicode.com/users/${idx}`));
     }
     
     // console.log(`DEBUG: userData \n${JSON.stringify(usersData, null, 2)}`);
     
+    // create an array to store users data
     const promises = await Promise.all(usersData);
-    const users = await Promise.all(promises.map(user2 => user2 ));
- 
+    const users = await Promise.all(promises.map(user => user.json() as Promise<User>));
 
-    ctx.response.body = JSON.stringify(users, null, 2);
+    // ctx.response.body = JSON.stringify(users.map(user =>user.name), null, 2);
+
+    ctx.response.body = users.map(user =>user.name);
     ctx.response.type = "json";
     ctx.response.status = Status.OK;
 });
